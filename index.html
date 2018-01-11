@@ -1,4 +1,4 @@
-<html>
+ <html>
   <head>
     <!--Install Skygear-->
     <script src="https://code.skygear.io/js/polyfill/latest/polyfill.min.js"></script>
@@ -17,12 +17,16 @@
           <label for="content-input">Content:</label><br/>
           <textarea class="form-control"  row="6" value="" id="content-input"></textarea>
         </div>
+        <div>
+          <input type="file" id="picture" accept="image/*">
+        </div>
         <button type="submit" class="btn btn-primary" id="save-button">Create Post</button>
       </form>
     </div>
     <div id="content">
     </div>
     <!--Load index.js-->
-    <script type="text/javascript" src="index.js"></script>
+    <script type="text/javascript" src="index.js"> </script>
+
   </body>
 </html>

@@ -1,6 +1,8 @@
 const SKYGEAR_ENDPOINT = 'https://awesometenten.skygeario.com/';
 const SKYGEAR_API_KEY = '19f6c34425d94c7785639415eb96a40f';
 
+
+// configuration
 skygear.config({
   'endPoint': SKYGEAR_ENDPOINT, // Endpoint
   'apiKey': SKYGEAR_API_KEY, // API Key
@@ -13,17 +15,21 @@ skygear.config({
   console.error(error);
 };
 
-
 document.getElementById("submit-blog-post").addEventListener("submit", (e) => {
   console.log("form is submitted!");
   e.preventDefault();
   const title = document.getElementById("title-input").value;
   const content = document.getElementById("content-input").value;
+  const cover = new skygear.Asset({
+    name: 'blogcover',
+    file: document.getElementById('picture').files[0],
+  });
 
   const BlogPost = skygear.Record.extend("blogpost");
   const blogpost = new BlogPost ({
     "title": title,
-    "content": content
+    "content": content,
+    "cover": cover,
   });
   skygear.publicDB.save(blogpost).then((record) => {
     console.log(record);
@@ -43,6 +49,7 @@ const showContent = () => {
     console.log(blogpost);
     const list = blogpost.map((blogpost) => {
       return "<article style='margin-top:40px;'>"+
+      "<p>"+blogpost.cover+"</p>"+
       "<h2>"+blogpost.title+"</h2>"+
       "<p>"+blogpost.createdAt+"</p>"+
       "<p style='margin-top:20px;'>"+blogpost.content+"</p>"+
