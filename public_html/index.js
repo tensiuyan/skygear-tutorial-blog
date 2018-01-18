@@ -20,16 +20,11 @@ document.getElementById("submit-blog-post").addEventListener("submit", (e) => {
   e.preventDefault();
   const title = document.getElementById("title-input").value;
   const content = document.getElementById("content-input").value;
-  const cover = new skygear.Asset({
-    name: 'blogcover',
-    file: document.getElementById('picture').files[0],
-  });
 
   const BlogPost = skygear.Record.extend("blogpost");
   const blogpost = new BlogPost ({
     "title": title,
     "content": content,
-    "cover": cover,
   });
   skygear.publicDB.save(blogpost).then((record) => {
     console.log(record);
@@ -46,15 +41,49 @@ const showContent = () => {
   queryBlogPost.addDescending('_created_at');
 
   skygear.publicDB.query(queryBlogPost).then((blogpost) => {
-    console.log(blogpost);
+
+    const blogID = (blogpost) => {
+      return blogpost.id;
+    }
+
     const list = blogpost.map((blogpost) => {
-      return "<article style='margin-top:40px;'>"+
-      "<p>"+blogpost.cover+"</p>"+
-      "<h2>"+blogpost.title+"</h2>"+
-      "<p>"+blogpost.createdAt+"</p>"+
-      "<p style='margin-top:20px;'>"+blogpost.content+"</p>"+
-      "</article>"
+      return `
+        <article style='margin-top:40px;'>
+          <h2>${blogpost.title}</h2>
+          <p>${blogpost.createdAt}</p>
+          <p style='margin-top:20px;'>${blogpost.content}</p>
+          <form class="form-comment" id='${blogID(blogpost)}' />
+            <input class="comment-text" type='text' placeholder="input comment here"/>
+            <input class="comment-submit" type='submit' value="comment" />
+          </form>
+        </article>
+      `
     }).join('');
     document.getElementById("content").innerHTML = list;
+  }).then(() => {
+    submitComment();
   });
-};
+}
+
+const submitComment = () => {
+  const forms = document.getElementsByClassName("form-comment");
+
+  for (var i=0; i<forms.length; i++){
+    forms.item(i).addEventListener("submit", (e) => {
+      e.preventDefault();
+      console.log(e);
+
+      const BlogPost = skygear.Record.extend("blogpost");
+      const blogpost = new BlogPost ({
+        "id": e.target.id,
+      });
+
+      const commentInput = e.target[0].value;
+      const Comment = skygear.Record.extend("comment");
+      const comment = new Comment ({
+        "comment": commentInput,
+        "blogPost": new skygear.Reference(blogpost)
+      });
+    })
+  }
+}
