@@ -36,33 +36,82 @@ document.getElementById("submit-blog-post").addEventListener("submit", (e) => {
 });
 
 const showContent = () => {
-  const BlogPost = skygear.Record.extend("blogpost");
-  const queryBlogPost = new skygear.Query(BlogPost);
-  queryBlogPost.addDescending('_created_at');
 
-  skygear.publicDB.query(queryBlogPost).then((blogpost) => {
+  const BlogPost = skygear.Record.extend('blogpost');
+  const Comment = skygear.Record.extend('comment');
 
-    const blogID = (blogpost) => {
-      return blogpost.id;
-    }
+  const blogPostQuery = new skygear.Query(BlogPost);
 
-    const list = blogpost.map((blogpost) => {
-      return `
-        <article style='margin-top:40px;'>
-          <h2>${blogpost.title}</h2>
-          <p>${blogpost.createdAt}</p>
-          <p style='margin-top:20px;'>${blogpost.content}</p>
-          <form class="form-comment" id='${blogID(blogpost)}' />
-            <input class="comment-text" type='text' placeholder="input comment here"/>
-            <input class="comment-submit" type='submit' value="comment" />
-          </form>
-        </article>
-      `
-    }).join('');
-    document.getElementById("content").innerHTML = list;
-  }).then(() => {
-    submitComment();
+  const blogPostToElement = (blogPost, comments = []) => `
+    <article style='margin-top:40px;'>
+      <h2>${blogPost.title}</h2>
+      <p>${blogPost.createdAt}</p>
+      <p style='margin-top:20px;'>${blogPost.content}</p>
+      <form class="form-comment" id='${blogPost.id}' />
+        <input class="comment-text" type='text' placeholder="input comment here"/>
+        <input class="comment-submit" type='submit' value="comment" />
+      </form>
+      ${comments.length > 0 ?
+          comments.map(commentToElement).join(' ') :
+          `<p>(No comments)</p>`
+        }
+    </article>
+  `;
+
+  const commentToElement = (comment) => `<p>${comment.comment}</p>`;
+
+  const queryBlogPostComments = (blogPost) => {
+    const commentQuery = new skygear.Query(Comment);
+    const blogPostRef = new skygear.Reference(blogPost);
+    commentQuery.equalTo('blogPost', blogPostRef);
+    return commentQuery;
+  };
+
+  skygear.publicDB.query(blogPostQuery).then((blogPosts) =>
+    Promise.all(blogPosts
+      // for each blog post
+      .map((blogPost) => {
+        return skygear.publicDB
+          // query comments of each blog post
+          .query(queryBlogPostComments(blogPost))
+          // render html elemnts for blog post and its comments
+          .then((comments) => blogPostToElement(blogPost, comments))
+          .catch((err) => {
+            console.log(err);
+            return '<p>Error comments</p>'
+          })
+      }))
+  ).then((elements) => {
+    document.getElementById("content").innerHTML = elements.join(' ');
   });
+
+  // const BlogPost = skygear.Record.extend("blogpost");
+  // const queryBlogPost = new skygear.Query(BlogPost);
+  // queryBlogPost.addDescending('_created_at');
+  //
+  // skygear.publicDB.query(queryBlogPost).then((blogpost) => {
+  //
+  //   const blogID = (blogpost) => {
+  //     return blogpost.id;
+  //   }
+  //
+  //   const list = blogpost.map((blogpost) => {
+  //     return `
+  //       <article style='margin-top:40px;'>
+  //         <h2>${blogpost.title}</h2>
+  //         <p>${blogpost.createdAt}</p>
+  //         <p style='margin-top:20px;'>${blogpost.content}</p>
+  //         <form class="form-comment" id='${blogID(blogpost)}' />
+  //           <input class="comment-text" type='text' placeholder="input comment here"/>
+  //           <input class="comment-submit" type='submit' value="comment" />
+  //         </form>
+  //       </article>
+  //     `
+  //   }).join('');
+  //   document.getElementById("content").innerHTML = list;
+  // }).then(() => {
+  //   submitComment();
+  // });
 }
 
 const submitComment = () => {
